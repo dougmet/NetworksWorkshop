@@ -1,0 +1,1206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Douglas Ashton - dashton@mango-solutions.com" />
+  <title>Network Analysis in R</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+  </style>
+  <link rel="stylesheet" type="text/css" media="screen, projection, print"
+    href="http://www.w3.org/Talks/Tools/Slidy2/styles/slidy.css" />
+  <link rel="stylesheet" type="text/css" media="screen, projection, print"
+   href="mango.css" />
+  <script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <script src="http://www.w3.org/Talks/Tools/Slidy2/scripts/slidy.js"
+    charset="utf-8" type="text/javascript"></script>
+</head>
+<body>
+<div class="slide titlepage">
+  <h1 class="title">Network Analysis in R</h1>
+  <p class="author">
+Douglas Ashton - dashton@mango-solutions.com
+  </p>
+</div>
+<div id="workshop-aims" class="slide section level1">
+<h1>Workshop Aims</h1>
+<ul>
+<li>Import/Export network data</li>
+<li>Visualising your network</li>
+<li>Descriptive stats</li>
+<li>Inference (statnet suite)</li>
+</ul>
+<br/><br/>
+<center>
+Also available as a two-day training course! <a href="http://bit.ly/NetsWork01
+">http://bit.ly/NetsWork01</a>
+</center>
+</div>
+<div id="about-me" class="slide section level1">
+<h1>About me</h1>
+<table class="layout">
+<tr>
+<td width="50%">
+<img src="images/about.png" height="750px">
+</td>
+<td>
+<ul>
+<li>Doug Ashton</li>
+<li>Physicist (statistical) for 10 years
+<ul>
+<li>Monte Carlo</li>
+<li>Networks</li>
+</ul></li>
+<li>At Mango for 1.5 years</li>
+<li>Windsurfer</li>
+</ul>
+<p>Twitter: <a href="https://twitter.com/dougashton"><span class="citation">@dougashton</span></a></p>
+<p>Web: <a href="http://www.dougashton.net">www.dougashton.net</a></p>
+<p>GitHub: <a href="https://github.com/dougmet">dougmet</a></p>
+</td>
+</tr>
+</table>
+</div>
+<div id="networks-are-everywhere" class="slide section level1">
+<h1>Networks are everywhere</h1>
+<div style="height:70%; text-align: center;">
+<img src="images/nets.jpg" height="750px">
+</div>
+</div>
+<div id="networks-in-r" class="slide section level1">
+<h1>Networks in R</h1>
+<ul>
+<li>R matrices (and sparse matrices in <code>Matrix</code>)</li>
+<li><code>igraph</code> package
+<ul>
+<li>Gabor Csardi</li>
+</ul></li>
+<li><code>statnet</code> package
+<ul>
+<li>University of Washington</li>
+<li>suite of packages</li>
+</ul></li>
+</ul>
+</div>
+<div id="representing-networks" class="slide section level1 sepblank">
+<h1>Representing Networks</h1>
+<!-- ################################################################
+     ##                 Representing Networks                      ##
+     ################################################################ -->
+</div>
+<div id="terminology" class="slide section level1">
+<h1>Terminology</h1>
+<table class="layout">
+<tr>
+<td width="50%">
+<h3 id="nodes-and-edges">Nodes and edges</h3>
+<img src="figure/unnamed-chunk-2-1.png" alt="plot of chunk unnamed-chunk-2" />
+</td>
+<td>
+<h3 id="directed">Directed</h3>
+<img src="figure/unnamed-chunk-3-1.png" alt="plot of chunk unnamed-chunk-3" />
+</td>
+</tr>
+</table>
+</div>
+<div id="matrix-representation" class="slide section level1">
+<h1>Matrix Representation</h1>
+<p>Code whether each possible edge exists or not. <span class="math">\[
+A_{ij} = \begin{cases} 0, &amp; \mbox{no edge} \\ 1, &amp; \mbox{edge exists} \end{cases}
+\]</span></p>
+<p>Example</p>
+<table class="layout">
+<tr>
+<td width="50%">
+<span class="math">\[
+A=\left( \begin{array}{cccc} 0 &amp; 0 &amp; 1 &amp; 1 \\ 1 &amp; 0 &amp; 0 &amp; 0 \\ 
+                      0 &amp; 0 &amp; 0 &amp; 1 \\ 0 &amp; 1 &amp; 0 &amp; 0 \end{array} \right)
+\]</span>
+</td>
+<td>
+<img src="figure/unnamed-chunk-4-1.png" alt="plot of chunk unnamed-chunk-4" />
+</td>
+</tr>
+</table>
+</div>
+<div id="matrices-in-r" class="slide section level1">
+<h1>Matrices in R</h1>
+<table class="layout">
+<tr>
+<td width="50%">
+<h3 id="create-the-matrix">Create the matrix</h3>
+<pre class="sourceCode r"><code class="sourceCode r">A &lt;-<span class="st"> </span><span class="kw">rbind</span>(<span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">0</span>), <span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">1</span>), <span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">0</span>))
+nodeNames &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;A&quot;</span>,<span class="st">&quot;B&quot;</span>,<span class="st">&quot;C&quot;</span>)
+<span class="kw">dimnames</span>(A) &lt;-<span class="st"> </span><span class="kw">list</span>(nodeNames, nodeNames)
+A</code></pre>
+<pre><code>##   A B C
+## A 0 1 0
+## B 1 0 1
+## C 1 0 0</code></pre>
+<p>Could also use sparse matrices from the <code>Matrix</code> package.</p>
+</td>
+<td>
+<h3 id="matrix-operations">Matrix operations</h3>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Matrix multiply</span>
+A %*%<span class="st"> </span>A </code></pre>
+<pre><code>##   A B C
+## A 1 0 1
+## B 1 1 0
+## C 0 1 0</code></pre>
+<p>Gives the number of paths of length 2.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Matrix multiply</span>
+A %*%<span class="st"> </span>A %*%<span class="st"> </span>A %*%<span class="st"> </span>A </code></pre>
+<pre><code>##   A B C
+## A 1 1 1
+## B 2 1 1
+## C 1 1 0</code></pre>
+Gives the number of paths of length 4. </td</tr>
+</table>
+</div>
+<div id="edge-list-representation" class="slide section level1">
+<h1>Edge List Representation</h1>
+<p>It is much more compact to just list the edges. We can use a two-column matrix</p>
+<p><span class="math">\[
+E=\left[ \begin{array}{cc} A &amp; B \\ B &amp; A \\ B &amp; C \\ C &amp; A \end{array} \right]
+\]</span></p>
+<p>which is represented in R as</p>
+<pre class="sourceCode r"><code class="sourceCode r">el &lt;-<span class="st"> </span><span class="kw">rbind</span>(<span class="kw">c</span>(<span class="st">&quot;A&quot;</span>,<span class="st">&quot;B&quot;</span>), <span class="kw">c</span>(<span class="st">&quot;B&quot;</span>,<span class="st">&quot;A&quot;</span>), <span class="kw">c</span>(<span class="st">&quot;B&quot;</span>,<span class="st">&quot;C&quot;</span>), <span class="kw">c</span>(<span class="st">&quot;C&quot;</span>,<span class="st">&quot;A&quot;</span>))
+el</code></pre>
+<pre><code>##      [,1] [,2]
+## [1,] &quot;A&quot;  &quot;B&quot; 
+## [2,] &quot;B&quot;  &quot;A&quot; 
+## [3,] &quot;B&quot;  &quot;C&quot; 
+## [4,] &quot;C&quot;  &quot;A&quot;</code></pre>
+</div>
+<div id="representation-in-igraph" class="slide section level1">
+<h1>Representation in <code>igraph</code></h1>
+<p><code>igraph</code> has its own efficient data structures for storing networks. The simplest way to make one is <code>graph_from_literal</code>. <br/></p>
+<table class="layout">
+<tr>
+<td width="50%">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(igraph)
+g &lt;-<span class="st"> </span><span class="kw">graph_from_literal</span>(A--B, B-+C, C-+A)</code></pre>
+<p><code>--</code> is both edges, <code>-+</code> is a directed edge.</p>
+<pre class="sourceCode r"><code class="sourceCode r">g</code></pre>
+<pre><code>## IGRAPH DN-- 3 2 -- 
+## + attr: name (v/c)
+## + edges (vertex names):
+## [1] B-&gt;C C-&gt;A</code></pre>
+</td>
+<td>
+<p>Output tells us it is</p>
+<ul>
+<li>Directed (D)</li>
+<li>Named (N)</li>
+<li>3 Nodes and 4 Edges</li>
+</ul>
+<p>And shows the edges (up to max number)</p>
+</td>
+</tr>
+</table>
+</div>
+<div id="more-ways-to-create-igraph-objects" class="slide section level1">
+<h1>More ways to create <code>igraph</code> objects</h1>
+<table class="layout">
+<tr>
+<td width="50%">
+<h3 id="edge-lists">Edge lists</h3>
+<pre class="sourceCode r"><code class="sourceCode r">g &lt;-<span class="st"> </span><span class="kw">graph_from_edgelist</span>(el, <span class="dt">directed=</span><span class="ot">TRUE</span>)</code></pre>
+</td>
+<td>
+<h3 id="adjacency-matrices">Adjacency matrices</h3>
+<pre class="sourceCode r"><code class="sourceCode r">g &lt;-<span class="st"> </span><span class="kw">graph_from_adjacency_matrix</span>(A)</code></pre>
+</td>
+</tr>
+<tr>
+<td>
+<h3 id="data-frames">Data frames</h3>
+<pre class="sourceCode r"><code class="sourceCode r">df &lt;-<span class="st"> </span><span class="kw">as.data.frame</span>(el)
+g &lt;-<span class="st"> </span><span class="kw">graph_from_data_frame</span>(df, <span class="dt">directed=</span><span class="ot">TRUE</span>)</code></pre>
+We'll come back to data frames.
+</td>
+<td>
+</td>
+</td>
+</tr>
+</table>
+<p><br/><br/> Trying searching for help on the <code>graph_from_</code> family of functions for more.</p>
+</div>
+<div id="converting-back" class="slide section level1">
+<h1>Converting Back</h1>
+<p>From a graph object we can output just as we read in:</p>
+<table class="layout">
+<tr>
+<td width="50%">
+<h3 id="adjacency-matrix">Adjacency Matrix</h3>
+<pre class="sourceCode r"><code class="sourceCode r">A &lt;-<span class="st"> </span><span class="kw">as_adjacency_matrix</span>(g, <span class="dt">sparse =</span> <span class="ot">FALSE</span>)
+A</code></pre>
+<pre><code>##   A B C
+## A 0 1 0
+## B 1 0 1
+## C 1 0 0</code></pre>
+</td>
+<td>
+<h3 id="edge-list">Edge List</h3>
+<pre class="sourceCode r"><code class="sourceCode r">el &lt;-<span class="st"> </span><span class="kw">as_edgelist</span>(g)
+el</code></pre>
+<pre><code>##      [,1] [,2]
+## [1,] &quot;A&quot;  &quot;B&quot; 
+## [2,] &quot;B&quot;  &quot;A&quot; 
+## [3,] &quot;B&quot;  &quot;C&quot; 
+## [4,] &quot;C&quot;  &quot;A&quot;</code></pre>
+</td>
+</tr>
+</table>
+<!-- ################################################################
+     ##                 Standard Structures                        ##
+     ################################################################ -->
+</div>
+<div id="standard-structures" class="slide section level1 sepblank">
+<h1>Standard Structures</h1>
+</div>
+<div id="standard-structures-1" class="slide section level1">
+<h1>Standard Structures</h1>
+<p><code>igraph</code> has a large number of built in functions for creating standard networks.</p>
+<table class="layout">
+<tr>
+<td width="50%">
+<h3 id="trees">Trees</h3>
+<pre class="sourceCode r"><code class="sourceCode r">g &lt;-<span class="st"> </span><span class="kw">make_tree</span>(<span class="dv">27</span>, <span class="dt">children=</span><span class="dv">3</span>)</code></pre>
+<div class="figure">
+<img src="figure/unnamed-chunk-14-1.png" alt="plot of chunk unnamed-chunk-14" /><p class="caption">plot of chunk unnamed-chunk-14</p>
+</div>
+</td>
+<td>
+<h3 id="complete-graphs-cliques">Complete Graphs (Cliques)</h3>
+<pre class="sourceCode r"><code class="sourceCode r">g &lt;-<span class="st"> </span><span class="kw">make_full_graph</span>(<span class="dt">n=</span><span class="dv">6</span>)</code></pre>
+<div class="figure">
+<img src="figure/unnamed-chunk-15-1.png" alt="plot of chunk unnamed-chunk-15" /><p class="caption">plot of chunk unnamed-chunk-15</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div id="standard-structures-2" class="slide section level1">
+<h1>Standard Structures</h1>
+<table class="layout">
+<tr>
+<td width="50%">
+<h3 id="lattices">Lattices</h3>
+<pre class="sourceCode r"><code class="sourceCode r">g &lt;-<span class="st"> </span><span class="kw">make_lattice</span>(<span class="dt">dimvector =</span> <span class="kw">c</span>(<span class="dv">5</span>,<span class="dv">5</span>),
+                  <span class="dt">circular =</span> <span class="ot">FALSE</span>)
+<span class="kw">V</span>(g)$label &lt;-<span class="st"> </span><span class="ot">NA</span></code></pre>
+<img src="figure/unnamed-chunk-16-1.png" alt="plot of chunk unnamed-chunk-16" />
+</td>
+<td>
+<h3 id="stars">Stars</h3>
+<pre class="sourceCode r"><code class="sourceCode r">g &lt;-<span class="st"> </span><span class="kw">make_star</span>(<span class="dt">n=</span><span class="dv">10</span>,<span class="dt">mode =</span> <span class="st">&quot;undirected&quot;</span>)</code></pre>
+<img src="figure/unnamed-chunk-17-1.png" alt="plot of chunk unnamed-chunk-17" />
+</td>
+</tr>
+</table>
+<center>
+Search help on the <code>make_</code> family of functions
+</center>
+</div>
+<div id="exercise" class="slide section level1">
+<h1>Exercise</h1>
+<ul>
+<li>Create a star network with 5 nodes</li>
+<li>Convert the network to an adjacency matrix</li>
+</ul>
+</div>
+<div id="importexport" class="slide section level1 sepblank">
+<h1>Import/Export</h1>
+<!-- ################################################################
+     ##              Import and Export                             ##
+     ################################################################ -->
+</div>
+<div id="networks-from-data-frames" class="slide section level1">
+<h1>Networks from Data Frames</h1>
+<p>Usually we'll read in edge lists as <code>data.frame</code> objects. The csv file <code>dolphin_edges.csv</code> contains the edge list of the undirected social network of 62 dolphins in a community living off Doubtful Sound, New Zealand*.</p>
+<pre class="sourceCode r"><code class="sourceCode r">dolphinEdges &lt;-<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&quot;data/dolphin_edges.csv&quot;</span>)
+<span class="kw">head</span>(dolphinEdges, <span class="dt">n=</span><span class="dv">4</span>)</code></pre>
+<pre><code>##   From      To
+## 1  CCL  Double
+## 2 DN16 Feather
+## 3 DN21 Feather
+## 4 Beak    Fish</code></pre>
+<p>Use the <code>graph_from_data_frame</code> function to read this format.</p>
+<pre class="sourceCode r"><code class="sourceCode r">dolphin &lt;-<span class="st"> </span><span class="kw">graph_from_data_frame</span>(dolphinEdges, <span class="dt">directed=</span><span class="ot">FALSE</span>)</code></pre>
+<p><small>*Data from: D. Lusseau, K. Schneider, O. J. Boisseau, P. Haase, E. Slooten, and S. M. Dawson, Behavioral Ecology and Sociobiology 54, 396-405 (2003)</small></p>
+</div>
+<div id="vertex-lists" class="slide section level1">
+<h1>Vertex Lists</h1>
+<p>It is also possible to load information about the vertices at the same time.</p>
+<pre class="sourceCode r"><code class="sourceCode r">dolphinVertices &lt;-<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&quot;data/dolphin_vertices.csv&quot;</span>)
+<span class="kw">head</span>(dolphinVertices, <span class="dt">n=</span><span class="dv">4</span>)</code></pre>
+<pre><code>##         Name Gender
+## 1       Beak   Male
+## 2 Beescratch   Male
+## 3     Bumper   Male
+## 4        CCL Female</code></pre>
+<p>And add this as the <code>vertices</code> argument to <code>graph_from_data_frame</code>.</p>
+<pre class="sourceCode r"><code class="sourceCode r">dolphin &lt;-<span class="st"> </span><span class="kw">graph_from_data_frame</span>(dolphinEdges, <span class="dt">vertices=</span>dolphinVertices,
+                                 <span class="dt">directed=</span><span class="ot">FALSE</span>)</code></pre>
+<p>Note: It's important that the first column of the vertex data frame is the names and they match the edge list perfectly.</p>
+</div>
+<div id="exporting-to-a-data.frame" class="slide section level1">
+<h1>Exporting to a data.frame</h1>
+<p>To export an igraph object back to a data.frame we use the <code>as_data_frame</code> function. This function can output the edge list, the vertex list or both depending on the what argument</p>
+<pre class="sourceCode r"><code class="sourceCode r">dolphinDFs &lt;-<span class="st"> </span><span class="kw">as_data_frame</span>(dolphin, <span class="dt">what=</span><span class="st">&quot;both&quot;</span>)
+<span class="kw">str</span>(dolphinDFs) <span class="co"># Both data frames in a list</span></code></pre>
+<pre><code>## List of 2
+##  $ vertices:&#39;data.frame&#39;:    62 obs. of  2 variables:
+##   ..$ name  : chr [1:62] &quot;Beak&quot; &quot;Beescratch&quot; &quot;Bumper&quot; &quot;CCL&quot; ...
+##   ..$ Gender: chr [1:62] &quot;Male&quot; &quot;Male&quot; &quot;Male&quot; &quot;Female&quot; ...
+##  $ edges   :&#39;data.frame&#39;:    159 obs. of  2 variables:
+##   ..$ from: chr [1:159] &quot;CCL&quot; &quot;DN16&quot; &quot;DN21&quot; &quot;Beak&quot; ...
+##   ..$ to  : chr [1:159] &quot;Double&quot; &quot;Feather&quot; &quot;Feather&quot; &quot;Fish&quot; ...</code></pre>
+</div>
+<div id="other-formats" class="slide section level1">
+<h1>Other formats</h1>
+<p><code>igraph</code> allows import and export from a number of common formats. This is done using the <code>read_graph</code> and <code>write_graph</code> functions. A common open format is <code>graphml</code>.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">write_graph</span>(dolphin, <span class="st">&quot;dolphin.graphml&quot;</span>, <span class="dt">format=</span><span class="st">&quot;graphml&quot;</span>)</code></pre>
+<p>See the table below for other common formats:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Format</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>edgelist</code></td>
+<td align="left">A simple text file with one edge per line</td>
+</tr>
+<tr class="even">
+<td align="left"><code>pajek</code></td>
+<td align="left">Pajek is a popular Windows program for network analysis</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>gml</code></td>
+<td align="left">Graph Modelling Language is a common text based open format</td>
+</tr>
+<tr class="even">
+<td align="left"><code>graphml</code></td>
+<td align="left">Graph Markup Language is an XML based open format</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>dot</code></td>
+<td align="left">Format used by GraphViz</td>
+</tr>
+</tbody>
+</table>
+<p><b>Gephi:</b> To export to Gephi's native GEXF format use the <code>rgexf</code> package, available on CRAN, which can convert directly from an igraph object.</p>
+</div>
+<div id="exercise---importing-from-csv" class="slide section level1">
+<h1>Exercise - Importing from csv</h1>
+<ol style="list-style-type: decimal">
+<li>Load the dolphin data set into <code>igraph</code>. Remember that the data is for an undirected network.</li>
+</ol>
+</div>
+<div id="network-manipulation" class="slide section level1 sepblank">
+<h1>Network Manipulation</h1>
+<!-- ################################################################
+     ##                 Network Manipulation                       ##
+     ################################################################ -->
+<!-- - Attributes
+     - Edge/Vertex selectors
+     - Subgraphs
+     - Adding/Deleting
+
+     Don't cover contracting and merging.
+
+     45 mins -->
+</div>
+<div id="attributes" class="slide section level1">
+<h1>Attributes</h1>
+<p>All objects in <code>igraph</code>, vertices and edges, can have attributes. Even the graph itself:</p>
+<p>Graph</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(igraphdata)
+<span class="kw">data</span>(<span class="st">&quot;USairports&quot;</span>)
+<span class="kw">graph_attr</span>(USairports)</code></pre>
+<pre><code>## $name
+## [1] &quot;US airports&quot;</code></pre>
+<p>Some have a special meaning, such as <code>name</code>, <code>weight</code> (for edges) and <code>type</code> (bi-partite graphs).</p>
+</div>
+<div id="vertex-attributes" class="slide section level1">
+<h1>Vertex Attributes</h1>
+<p>We can use the <code>_attr</code> functions to access attributes</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">vertex_attr_names</span>(USairports)</code></pre>
+<pre><code>## [1] &quot;name&quot;     &quot;City&quot;     &quot;Position&quot;</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">vertex_attr</span>(USairports, <span class="st">&quot;City&quot;</span>)</code></pre>
+<pre><code>## [1] &quot;Bangor, ME&quot;    &quot;Boston, MA&quot;    &quot;Anchorage, AK&quot; &quot;New York, NY&quot; 
+## [5] &quot;Las Vegas, NV&quot; &quot;Miami, FL&quot;    
+##  [ reached getOption(&quot;max.print&quot;) -- omitted 749 entries ]</code></pre>
+</div>
+<div id="edge-attributes" class="slide section level1">
+<h1>Edge Attributes</h1>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">edge_attr_names</span>(USairports)</code></pre>
+<pre><code>## [1] &quot;Carrier&quot;    &quot;Departures&quot; &quot;Seats&quot;      &quot;Passengers&quot; &quot;Aircraft&quot;  
+## [6] &quot;Distance&quot;</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">edge_attr</span>(USairports, <span class="st">&quot;Carrier&quot;</span>)</code></pre>
+<pre><code>## [1] &quot;British Airways Plc&quot;       &quot;British Airways Plc&quot;      
+## [3] &quot;British Airways Plc&quot;       &quot;China Airlines Ltd.&quot;      
+## [5] &quot;China Airlines Ltd.&quot;       &quot;Korean Air Lines Co. Ltd.&quot;
+##  [ reached getOption(&quot;max.print&quot;) -- omitted 23467 entries ]</code></pre>
+<p>The <code>weight</code> attribute is treated in a special way for edges and can affect the result of some calculations, such as path lengths and centrality measures.</p>
+</div>
+<div id="sequences" class="slide section level1">
+<h1>Sequences</h1>
+<p>The sequence functions: <code>V()</code> for vertices and <code>E()</code> for edges, allow selections and access to attributes. They return special <code>igraph.vs</code> and <code>igraph.es</code> objects that can be reused.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">V</span>(USairports)[<span class="dv">1</span>:<span class="dv">5</span>] <span class="co"># Subset by index</span></code></pre>
+<pre><code>## + 5/755 vertices, named:
+## [1] BGR BOS ANC JFK LAS</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">V</span>(USairports)[<span class="st">&quot;JFK&quot;</span>] <span class="co"># Subset by name</span></code></pre>
+<pre><code>## + 1/755 vertex, named:
+## [1] JFK</code></pre>
+<p>Access all attributes of a vertex with double square brackets</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">V</span>(USairports)[[<span class="st">&quot;JFK&quot;</span>]] <span class="co"># All attributes</span></code></pre>
+<pre><code>## + 1/755 vertex, named:
+##   name         City         Position
+## 4  JFK New York, NY N403823 W0734644</code></pre>
+</div>
+<div id="adding-attributes" class="slide section level1">
+<h1>Adding Attributes</h1>
+<p>The dollar notation allows us to manipulate attributes much like a <code>data.frame</code>.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">V</span>(USairports)[<span class="dv">1</span>:<span class="dv">5</span>]$City <span class="co"># Access attributes</span></code></pre>
+<pre><code>## [1] &quot;Bangor, ME&quot;    &quot;Boston, MA&quot;    &quot;Anchorage, AK&quot; &quot;New York, NY&quot; 
+## [5] &quot;Las Vegas, NV&quot;</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Add new attributes</span>
+<span class="kw">V</span>(USairports)$Group &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">c</span>(<span class="st">&quot;A&quot;</span>,<span class="st">&quot;B&quot;</span>), <span class="kw">vcount</span>(USairports), <span class="dt">replace=</span><span class="ot">TRUE</span>)
+<span class="kw">V</span>(USairports)[[<span class="dv">1</span>:<span class="dv">5</span>]] <span class="co"># Double square brackets give all attributes</span></code></pre>
+<pre><code>## + 5/755 vertices, named:
+##   name          City         Position Group
+## 1  BGR    Bangor, ME N444827 W0684941     B
+## 2  BOS    Boston, MA N422152 W0710019     A
+## 3  ANC Anchorage, AK N611028 W1495947     A
+## 4  JFK  New York, NY N403823 W0734644     B
+## 5  LAS Las Vegas, NV N360449 W1150908     B</code></pre>
+</div>
+<div id="edge-selectors" class="slide section level1">
+<h1>Edge Selectors</h1>
+<p>We can also access edges between named vertices using the special <code>%--%</code> (undirected) and <code>%-&gt;%</code> (directed) operators.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">E</span>(USairports)[<span class="st">&quot;JFK&quot;</span> %--%<span class="st"> &quot;BOS&quot;</span>] <span class="co"># Edges in both directions</span></code></pre>
+<pre><code>## + 26/23473 edges (vertex names):
+##  [1] BOS-&gt;JFK BOS-&gt;JFK JFK-&gt;BOS JFK-&gt;BOS BOS-&gt;JFK JFK-&gt;BOS BOS-&gt;JFK
+##  [8] JFK-&gt;BOS BOS-&gt;JFK BOS-&gt;JFK BOS-&gt;JFK BOS-&gt;JFK BOS-&gt;JFK JFK-&gt;BOS
+## [15] JFK-&gt;BOS JFK-&gt;BOS JFK-&gt;BOS BOS-&gt;JFK JFK-&gt;BOS BOS-&gt;JFK BOS-&gt;JFK
+## [22] JFK-&gt;BOS JFK-&gt;BOS BOS-&gt;JFK JFK-&gt;BOS BOS-&gt;JFK</code></pre>
+<p>All carriers from JFK to BOS.</p>
+<pre class="sourceCode r"><code class="sourceCode r"> <span class="kw">unique</span>(<span class="kw">E</span>(USairports)[<span class="st">&quot;JFK&quot;</span> %-&gt;%<span class="st"> &quot;BOS&quot;</span>]$Carrier) <span class="co"># Directed edges</span></code></pre>
+<pre><code>## [1] &quot;JetBlue Airways&quot;              &quot;Compass Airlines&quot;            
+## [3] &quot;Pinnacle Airlines Inc.&quot;       &quot;Comair Inc.&quot;                 
+## [5] &quot;Atlantic Southeast Airlines&quot;  &quot;American Eagle Airlines Inc.&quot;
+## [7] &quot;Chautauqua Airlines Inc.&quot;</code></pre>
+</div>
+<div id="edges-between-groups" class="slide section level1">
+<h1>Edges Between Groups</h1>
+<p>The edge selectors can be between groups of vertices:</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Grep the state code from the city</span>
+inCal &lt;-<span class="st"> </span><span class="kw">grepl</span>(<span class="st">&quot;CA$&quot;</span>, <span class="kw">V</span>(USairports)$City)
+inNy &lt;-<span class="st"> </span><span class="kw">grepl</span>(<span class="st">&quot;NY$&quot;</span>, <span class="kw">V</span>(USairports)$City)
+
+<span class="co"># Edges from CA to NY</span>
+<span class="kw">E</span>(USairports)[<span class="kw">V</span>(USairports)[inCal] %-&gt;%<span class="st"> </span><span class="kw">V</span>(USairports)[inNy]]</code></pre>
+<pre><code>## + 35/23473 edges (vertex names):
+##  [1] LAX-&gt;JFK LAX-&gt;JFK LAX-&gt;JFK LAX-&gt;JFK SAN-&gt;JFK SFO-&gt;JFK SFO-&gt;JFK
+##  [8] SFO-&gt;JFK BUR-&gt;JFK LAX-&gt;JFK LGB-&gt;JFK OAK-&gt;JFK SAN-&gt;JFK SFO-&gt;JFK
+## [15] SJC-&gt;JFK SMF-&gt;JFK LAX-&gt;JFK LAX-&gt;JFK LAX-&gt;JFK SAN-&gt;JFK SAN-&gt;JFK
+## [22] SFO-&gt;JFK SFO-&gt;JFK SNA-&gt;JFK LAX-&gt;ALB LAX-&gt;JFK LAX-&gt;JFK SFO-&gt;JFK
+## [29] SFO-&gt;JFK SFO-&gt;JFK BUR-&gt;FRG LAX-&gt;JFK LAX-&gt;JFK SFO-&gt;JFK SFO-&gt;JFK</code></pre>
+<p>Returns all flights from California to New York (state).</p>
+</div>
+<div id="exercise---attributes" class="slide section level1">
+<h1>Exercise - Attributes</h1>
+<ol style="list-style-type: decimal">
+<li>Using the igraph object created in the previous exercise, count the number of male and female dolphins in the pod.</li>
+<li>Add a weight=1 attribute to every edge in the dolphin network. Verify that the igraph object is now a weighted network.</li>
+</ol>
+</div>
+<div id="induced-subgraph" class="slide section level1">
+<h1>Induced subgraph</h1>
+<p>To get a new graph containing the selected vertices we must also copy over all of the edges between those vertices. This is done by the induced_subgraph function</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># inCal has the vertex ids we want</span>
+calAirports &lt;-<span class="st"> </span><span class="kw">induced_subgraph</span>(USairports, inCal)
+calAirports</code></pre>
+<pre><code>## IGRAPH DN-- 34 381 -- US airports
+## + attr: name (g/c), name (v/c), City (v/c), Position (v/c), Group
+## | (v/c), Carrier (e/c), Departures (e/n), Seats (e/n), Passengers
+## | (e/n), Aircraft (e/n), Distance (e/n)
+## + edges (vertex names):
+##  [1] LAX-&gt;SFO LAX-&gt;SFO LAX-&gt;SFO LAX-&gt;SFO LAX-&gt;SFO LAX-&gt;SFO LAX-&gt;SFO
+##  [8] LAX-&gt;SFO LAX-&gt;SFO LAX-&gt;SFO LAX-&gt;SFO LAX-&gt;SFO LAX-&gt;SFO LAX-&gt;SFO
+## [15] LAX-&gt;SFO LAX-&gt;SFO LAX-&gt;SAN LAX-&gt;SAN LAX-&gt;SAN LAX-&gt;SAN LAX-&gt;SAN
+## [22] LAX-&gt;SAN LAX-&gt;SAN LAX-&gt;SAN LAX-&gt;SAN LAX-&gt;SAN LAX-&gt;SAN LAX-&gt;SAN
+## [29] LAX-&gt;SAN LAX-&gt;SAN LAX-&gt;SMF LAX-&gt;SMF LAX-&gt;SMF LAX-&gt;SMF LAX-&gt;SMF
+## [36] LAX-&gt;SMF LAX-&gt;SMF LAX-&gt;SNA LAX-&gt;BUR LAX-&gt;OAK LAX-&gt;OAK LAX-&gt;OAK
+## + ... omitted several edges</code></pre>
+<p>The subgraph.edges function does the same thing but selecting edges to keep (and their attached vertices).</p>
+</div>
+<div id="neighbourhoods" class="slide section level1">
+<h1>Neighbourhoods</h1>
+<p>A common task is to subset all of the neighbours of a particular vertex. To return all neigh- bours within a distance, d, of a number of targets we can do</p>
+<pre class="sourceCode r"><code class="sourceCode r">d2Vertices &lt;-<span class="st"> </span><span class="kw">ego</span>(USairports, <span class="dt">nodes =</span> <span class="kw">c</span>(<span class="st">&quot;JFK&quot;</span>,<span class="st">&quot;LAX&quot;</span>), <span class="dt">order=</span><span class="dv">2</span>)</code></pre>
+<p>which returns a list containing the vertices within 2 of JFK and LAX. If we want the neighbourhood of a vertex as a new graph we can do</p>
+<pre class="sourceCode r"><code class="sourceCode r">JFKNet &lt;-<span class="st"> </span><span class="kw">make_ego_graph</span>(USairports, <span class="dt">nodes =</span> <span class="st">&quot;JFK&quot;</span>, <span class="dt">order=</span><span class="dv">2</span>)[[<span class="dv">1</span>]]
+<span class="co"># Returns a length 1 list</span></code></pre>
+</div>
+<div id="adding" class="slide section level1">
+<h1>Adding</h1>
+<p>The <code>edges</code> and <code>vertices</code> functions can be used to add edges</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># A directed completely empty graph</span>
+g &lt;-<span class="st"> </span><span class="kw">make_empty_graph</span>(<span class="dt">n =</span> <span class="dv">0</span>, <span class="dt">directed =</span> <span class="ot">TRUE</span>)
+
+g &lt;-<span class="st"> </span>g +<span class="st"> </span><span class="kw">vertices</span>(<span class="kw">c</span>(<span class="st">&quot;A&quot;</span>,<span class="st">&quot;B&quot;</span>,<span class="st">&quot;C&quot;</span>))</code></pre>
+<p>And edges</p>
+<pre class="sourceCode r"><code class="sourceCode r">g &lt;-<span class="st"> </span>g +<span class="st"> </span><span class="kw">edges</span>(<span class="kw">c</span>(<span class="st">&quot;A&quot;</span>,<span class="st">&quot;C&quot;</span>, <span class="st">&quot;B&quot;</span>,<span class="st">&quot;C&quot;</span>)) <span class="co"># edge from A to C and &quot;B&quot; to &quot;C&quot;</span></code></pre>
+</div>
+<div id="deleting" class="slide section level1">
+<h1>Deleting</h1>
+<p>For deletion it's easiest to use edge and vertex selectors</p>
+<pre class="sourceCode r"><code class="sourceCode r">g &lt;-<span class="st"> </span>g -<span class="st"> </span><span class="kw">V</span>(g)[<span class="st">&quot;A&quot;</span>] <span class="co"># Remove edge A</span></code></pre>
+<p>Note this will remove all attached edges. All edge and vertex subsetting can be used here.</p>
+</div>
+<div id="exercise---subgraphs" class="slide section level1">
+<h1>Exercise - Subgraphs</h1>
+<ol style="list-style-type: decimal">
+<li>Find the edges in the USairports network that have a Distance&gt;1500.</li>
+<li>Use the edge indices to create the long haul (&gt; 1500 miles) flights network.</li>
+<li>How many airports can you get to from Oakland (OAK) with a single stop?</li>
+</ol>
+</div>
+<div id="visualisation" class="slide section level1 sepblank">
+<h1>Visualisation</h1>
+<!-- ################################################################
+     ##              Visualisation                                 ##
+     ################################################################ -->
+</div>
+<div id="plotting-in-igraph" class="slide section level1">
+<h1>Plotting in <code>igraph</code></h1>
+<p><code>igraph</code> uses base R plotting methods. Plotting is done through the S3 generic plot function. To find specific help for this function try typing</p>
+<pre class="sourceCode r"><code class="sourceCode r">?plot.igraph
+<span class="co"># Or</span>
+?igraph.plotting</code></pre>
+</div>
+<div id="default-plot" class="slide section level1">
+<h1>Default plot</h1>
+<p>The default settings for the network plot usually work well for small graphs.</p>
+<table class="layout">
+<tr>
+<td width="40%">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Make a ring with some cross connections</span>
+g &lt;-<span class="st"> </span><span class="kw">make_ring</span>(<span class="dv">10</span>, <span class="dt">directed=</span><span class="ot">TRUE</span>, <span class="dt">mutual=</span><span class="ot">TRUE</span>)
+<span class="kw">V</span>(g)$name &lt;-<span class="st"> </span>LETTERS[<span class="dv">1</span>:<span class="dv">10</span>]
+
+g &lt;-<span class="st"> </span>g +<span class="st"> </span><span class="kw">edges</span>(<span class="dv">9</span>,<span class="dv">5</span>, <span class="dv">7</span>,<span class="dv">1</span>, <span class="dv">1</span>,<span class="dv">5</span>)
+## plot(g)</code></pre>
+</td>
+<td>
+<img src="figure/unnamed-chunk-42-1.png" alt="plot of chunk unnamed-chunk-42" />
+</td>
+</tr>
+</table>
+</div>
+<div id="layouts" class="slide section level1">
+<h1>Layouts</h1>
+<p>A layout is just a set of x and y coordinates. They can be specified manually but more often we will use one of the <code>layout_</code> functions.</p>
+<table class="layout">
+<tr>
+<td width="50%">
+<p>To enforce the ring structure we could do</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Store coordinates for the layout in lo</span>
+lo &lt;-<span class="st"> </span><span class="kw">layout_in_circle</span>(g)
+<span class="kw">head</span>(lo, <span class="dt">n=</span><span class="dv">4</span>) <span class="co"># lo is a matrix of coordinates</span></code></pre>
+<pre><code>##           [,1]      [,2]
+## [1,]  1.000000 0.0000000
+## [2,]  0.809017 0.5877853
+## [3,]  0.309017 0.9510565
+## [4,] -0.309017 0.9510565</code></pre>
+</td>
+<td>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(g, <span class="dt">layout=</span>lo)</code></pre>
+<img src="figure/unnamed-chunk-44-1.png" alt="plot of chunk unnamed-chunk-44" />
+</td>
+</tr>
+</table>
+<p>See <code>?layout_</code> for a full list.</p>
+</div>
+<div id="more-layouts" class="slide section level1">
+<h1>More layouts</h1>
+<table class="layout">
+<tr>
+<td width="50%">
+<p>For tree-like networks the <code>layout_as_tree</code> layout will try to organise vertices into levels.</p>
+<pre class="sourceCode r"><code class="sourceCode r">gTree &lt;-<span class="st"> </span><span class="kw">make_tree</span>(<span class="dv">15</span>)
+<span class="kw">plot</span>(gTree, <span class="dt">layout=</span><span class="kw">layout_as_tree</span>(gTree, <span class="dt">root =</span> <span class="dv">1</span>))</code></pre>
+<img src="figure/unnamed-chunk-45-1.png" alt="plot of chunk unnamed-chunk-45" />
+</td>
+<td>
+<p>Grid layout</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(g, <span class="dt">layout=</span><span class="kw">layout_on_grid</span>(g))</code></pre>
+<img src="figure/unnamed-chunk-46-1.png" alt="plot of chunk unnamed-chunk-46" />
+</td>
+</tr>
+</table>
+</div>
+<div id="force-layouts" class="slide section level1">
+<h1>Force Layouts</h1>
+<p>The most common layouts for medium or large graphs are force layouts. <code>igraph</code> has a number of these:</p>
+<table class="layout">
+<tr>
+<td width="50%">
+<table>
+<thead>
+<tr class="header">
+<th align="left">Function</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>layout_with_kk</code></td>
+<td align="left">Kamada-Kawai layout algorithm. Edge weights correspond to length of springs</td>
+</tr>
+<tr class="even">
+<td align="left"><code>layout_with_fr</code></td>
+<td align="left">Fruchterman-Reingold layout algorithm. Edge weights correspond to the strength of the springs</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>layout_with_drl</code></td>
+<td align="left">The Distributed Recursive (Graph) Layout (DrL) algorithm. Based on the VxOrd package from Sandia labs</td>
+</tr>
+</tbody>
+</table>
+</td>
+<td>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(dolphin, <span class="dt">layout=</span><span class="kw">layout_with_fr</span>(dolphin))</code></pre>
+<div class="figure">
+<img src="figure/unnamed-chunk-47-1.png" alt="plot of chunk unnamed-chunk-47" /><p class="caption">plot of chunk unnamed-chunk-47</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div id="vertex-properties" class="slide section level1">
+<h1>Vertex Properties</h1>
+<p>We can change various aspects of the vertex appearance. For example the shape:</p>
+<pre class="sourceCode r"><code class="sourceCode r"> <span class="co"># Plot vowels as rectangles</span>
+vowel &lt;-<span class="st"> </span><span class="kw">V</span>(g)$name %in%<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;A&quot;</span>,<span class="st">&quot;E&quot;</span>,<span class="st">&quot;I&quot;</span>,<span class="st">&quot;O&quot;</span>,<span class="st">&quot;U&quot;</span>) +<span class="st"> </span><span class="dv">1</span> <span class="co"># gives 1 or 2</span>
+<span class="kw">plot</span>(g, <span class="dt">layout=</span>lo, <span class="dt">vertex.shape=</span><span class="kw">c</span>(<span class="st">&quot;circle&quot;</span>, <span class="st">&quot;square&quot;</span>)[vowel])</code></pre>
+<div class="figure">
+<img src="figure/unnamed-chunk-48-1.png" alt="plot of chunk unnamed-chunk-48" /><p class="caption">plot of chunk unnamed-chunk-48</p>
+</div>
+</div>
+<div id="vertex-colours-and-size" class="slide section level1">
+<h1>Vertex Colours and Size</h1>
+<table class="layout">
+<tr>
+<td width="50%">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(g, <span class="dt">layout=</span>lo, <span class="dt">vertex.color=</span><span class="kw">c</span>(<span class="st">&quot;tomato2&quot;</span>, <span class="st">&quot;royalblue&quot;</span>)[vowel])</code></pre>
+<img src="figure/unnamed-chunk-49-1.png" alt="plot of chunk unnamed-chunk-49" />
+</td>
+<td>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(g, <span class="dt">layout=</span>lo, <span class="dt">vertex.size=</span><span class="kw">c</span>(<span class="dv">15</span>,<span class="dv">30</span>)[vowel])</code></pre>
+<img src="figure/unnamed-chunk-50-1.png" alt="plot of chunk unnamed-chunk-50" />
+</td>
+</tr>
+</table>
+</div>
+<div id="properties-using-attributes" class="slide section level1">
+<h1>Properties Using Attributes</h1>
+<p>Any of the plotting properties can also be set as attributes of the vertices/edges.</p>
+<table class="layout">
+<tr>
+<td width="50%">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">V</span>(g)$shape &lt;-<span class="st"> &quot;circle&quot;</span> <span class="co"># Applies to all vertices</span>
+<span class="kw">V</span>(g)$size &lt;-<span class="st"> </span><span class="dv">15</span>
+<span class="kw">V</span>(g)$color &lt;-<span class="st"> &quot;orange&quot;</span>
+
+isVowel &lt;-<span class="st"> </span><span class="kw">V</span>(g)$name %in%<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;A&quot;</span>,<span class="st">&quot;E&quot;</span>,<span class="st">&quot;I&quot;</span>,<span class="st">&quot;O&quot;</span>,<span class="st">&quot;U&quot;</span>)
+
+<span class="co"># Now overwrite the vowel nodes</span>
+<span class="kw">V</span>(g)[isVowel]$shape &lt;-<span class="st"> &quot;square&quot;</span>
+<span class="kw">V</span>(g)[isVowel]$color &lt;-<span class="st"> &quot;royalblue&quot;</span>
+<span class="kw">V</span>(g)[isVowel]$size &lt;-<span class="st"> </span><span class="dv">25</span>
+
+<span class="kw">plot</span>(g, <span class="dt">layout=</span>lo)</code></pre>
+</td>
+<td>
+<img src="figure/unnamed-chunk-52-1.png" alt="plot of chunk unnamed-chunk-52" />
+</td>
+</tr>
+</table>
+</div>
+<div id="edge-properties" class="slide section level1">
+<h1>Edge Properties</h1>
+<p>A selection of edge properties we can change:</p>
+<table class="layout">
+<tr>
+<td width="50%">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Setting edge attributes</span>
+<span class="kw">E</span>(g)$width &lt;-<span class="st"> </span><span class="dv">1</span>
+<span class="kw">E</span>(g)[<span class="kw">V</span>(g)[isVowel] %--%<span class="st"> </span><span class="kw">V</span>(g)[isVowel]]$width &lt;-<span class="st"> </span><span class="dv">4</span>
+
+## plot(g, layout=lo)</code></pre>
+</td>
+<td>
+<img src="figure/unnamed-chunk-54-1.png" alt="plot of chunk unnamed-chunk-54" />
+</td>
+</tr>
+</table>
+</div>
+<div id="curved-edges" class="slide section level1">
+<h1>Curved Edges</h1>
+<table class="layout">
+<tr>
+<td width="50%">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Only curve mutual edges</span>
+ <span class="kw">plot</span>(g, <span class="dt">layout=</span>lo, <span class="dt">edge.curved=</span><span class="fl">0.3</span>*<span class="kw">which_mutual</span>(g))</code></pre>
+</td>
+<td>
+<img src="figure/unnamed-chunk-56-1.png" alt="plot of chunk unnamed-chunk-56" />
+</td>
+</tr>
+</table>
+</div>
+<div id="groupings" class="slide section level1">
+<h1>Groupings</h1>
+We can build some rich plots.
+<table class="layout">
+<tr>
+<td width="50%">
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Assign groups by index</span>
+groupList &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">vowelGroup =</span> <span class="kw">which</span>(isVowel),
+                  <span class="dt">constGroup1 =</span> <span class="kw">c</span>(<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>),
+                  <span class="dt">constGroup2 =</span> <span class="kw">c</span>(<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>))
+
+<span class="co"># Alpha looks nice</span>
+groupColours &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">rgb</span>(<span class="dv">0</span>,<span class="fl">0.3</span>,<span class="dv">1</span>,<span class="fl">0.5</span>),
+                  <span class="kw">rgb</span>(<span class="fl">0.8</span>,<span class="fl">0.4</span>,<span class="fl">0.1</span>,<span class="fl">0.5</span>),
+                  <span class="kw">rgb</span>(<span class="fl">0.8</span>,<span class="fl">0.4</span>,<span class="fl">0.1</span>,<span class="fl">0.5</span>))
+
+<span class="kw">plot</span>(g, <span class="dt">layout=</span>layout_with_fr, <span class="co"># Fruchterman-Reingold layout</span>
+  <span class="dt">mark.groups=</span>groupList, <span class="co"># Mark the groups</span>
+  <span class="dt">mark.col=</span> groupColours,
+  <span class="dt">mark.border =</span> <span class="ot">NA</span>, <span class="co"># Remove the border (if desired)</span>
+  <span class="dt">edge.curved=</span><span class="fl">0.1</span>*<span class="kw">which_mutual</span>(g))
+
+ <span class="kw">text</span>(<span class="fl">0.45</span>,<span class="fl">0.1</span>,<span class="st">&quot;Vowels&quot;</span>, <span class="dt">cex=</span><span class="fl">1.5</span>)
+ <span class="kw">text</span>(<span class="fl">0.5</span>,<span class="fl">0.9</span>,<span class="st">&quot;Consonant Group 1&quot;</span>, <span class="dt">cex=</span><span class="fl">1.5</span>)
+ <span class="kw">text</span>(-<span class="fl">0.8</span>,-<span class="dv">1</span>,<span class="st">&quot;Consonant Group 2&quot;</span>, <span class="dt">cex=</span><span class="fl">1.5</span>)</code></pre>
+</td>
+<td>
+<img src="figure/unnamed-chunk-58-1.png" alt="plot of chunk unnamed-chunk-58" />
+</td>
+</tr>
+</table>
+</div>
+<div id="descriptive-statistics" class="slide section level1 sepblank">
+<h1>Descriptive Statistics</h1>
+<!-- ################################################################
+     ##              Descriptive Statistics                        ##
+     ################################################################ -->
+</div>
+<div id="background" class="slide section level1">
+<h1>Background</h1>
+<p>Visualisations can be hard to interpret for large networks. Important features will often be impossible to see. Common features include:</p>
+<ol style="list-style-type: decimal">
+<li><p>Small worlds: As small-world networks grow the path length between vertices grows very slowly.</p></li>
+<li><p>Hubs: Networks with hubs have a small number of vertices with a large number of connections.</p></li>
+<li><p>Clustering: Your friends are often also friends with each other. In network terms this means that there are a lot of triangles.</p></li>
+</ol>
+<p>We will look out how to measure and interpret these structural properties along with some more complex centrality measures for finding important vertices.</p>
+</div>
+<div id="degree" class="slide section level1">
+<h1>Degree</h1>
+<table class="layout">
+<tr>
+<td width="60%">
+<p>The degree, <span class="math">\(k\)</span>, of a vertex is a count of the number edges attached to it. If the network is directed then we refer to in-degree, <span class="math">\(k_{in}\)</span> for edges pointing into the vertex, and out-degree, <span class="math">\(k_{out}\)</span>, for edges going out from the vertex.</p>
+<p>In <code>igraph</code> we do</p>
+<pre class="sourceCode r"><code class="sourceCode r"> degDol &lt;-<span class="st"> </span><span class="kw">degree</span>(dolphin)
+ <span class="kw">head</span>(degDol)</code></pre>
+<pre><code>##       Beak Beescratch     Bumper        CCL      Cross       DN16 
+##          6          8          4          3          1          4</code></pre>
+<p>A common task is to find the degree distribution</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">hist</span>(<span class="kw">degree</span>(dolphin))</code></pre>
+<p>For directed networks we can specify the type of degree with the <code>mode</code> argument taking <code>out</code>, <code>in</code> or <code>total</code>.</p>
+</td>
+<td>
+<img src="images/degree.jpg" height="500px">
+</td>
+</tr>
+</table>
+</div>
+<div id="clustering" class="slide section level1">
+<h1>Clustering</h1>
+<p>A simple local motif that we could look for is the triangle. This tells us whether your friends are likely to be friends, it also tells us about how often you’ll hear the same information compared to hearing fresh information from outside your group. The relative frequency of closed triangles is often known as <em>clustering</em>, or the <em>transitivity</em> of a network.</p>
+<pre class="sourceCode r"><code class="sourceCode r">g &lt;-<span class="st"> </span><span class="kw">graph_from_literal</span>(A--B, A--C, A--D, B--C, C--D, D--E)</code></pre>
+<table class="layout">
+<tr>
+<td width="50%">
+<h3 id="global-clustering">Global Clustering</h3>
+<p><span class="math">\[ C = \frac{3 ∗ \rm{Number\ of\ triangles}}{\rm{Number\ of\ connected\ triples}}\]</span></p>
+<pre class="sourceCode r"><code class="sourceCode r"> <span class="kw">transitivity</span>(g, <span class="dt">type =</span> <span class="st">&quot;global&quot;</span>)</code></pre>
+<pre><code>## [1] 0.6</code></pre>
+</td>
+<td>
+<h3 id="local-clustering">Local Clustering</h3>
+<p>Fraction of connected triples through each vertex that are closed.</p>
+<pre class="sourceCode r"><code class="sourceCode r"> <span class="kw">transitivity</span>(g, <span class="dt">type =</span> <span class="st">&quot;local&quot;</span>)</code></pre>
+<pre><code>## [1] 0.6666667 1.0000000 0.6666667 0.3333333       NaN</code></pre>
+</td>
+</tr>
+</table>
+</div>
+<div id="paths" class="slide section level1">
+<h1>Paths</h1>
+<p>In graph theory a path is a sequence of vertices, each connected to the next with an edge. A geodesic, or shortest path, must not cross itself. In <code>igraph</code> we get shortest paths with:</p>
+<pre class="sourceCode r"><code class="sourceCode r">sp &lt;-<span class="st"> </span><span class="kw">shortest_paths</span>(dolphin, <span class="dt">from=</span><span class="st">&quot;Beak&quot;</span>, <span class="dt">to=</span><span class="st">&quot;Whitetip&quot;</span>) 
+sp$vpath</code></pre>
+<pre><code>## [[1]]
+## + 4/62 vertices, named:
+## [1] Beak     Grin     SN63     Whitetip</code></pre>
+<p>Other useful functions include: <code>distance_table</code>, <code>mean_distance</code>. The diameter of the network is the largest geodesic. This gives a good idea of the effective size of the network.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">diameter</span>(dolphin)</code></pre>
+<pre><code>## [1] 8</code></pre>
+</div>
+<div id="exercise---structural-measures" class="slide section level1">
+<h1>Exercise - Structural Measures</h1>
+<p>For the dolphin network</p>
+<ol style="list-style-type: decimal">
+<li>Find the vertex with the highest degree, k.</li>
+<li>Find the vertex with the highest local clustering coefficient.</li>
+<li>Plot a histogram of the shortest path lengths between all vertices.</li>
+</ol>
+</div>
+<div id="centrality-measures" class="slide section level1">
+<h1>Centrality Measures</h1>
+<p>Degree is the simplest centrality measure. Many others exist to try to assess which vertices are the most important in some way. The measure you choose depends on what function of the network you are interested in. Here we will cover some of the most popular measures.</p>
+</div>
+<div id="betweeness-centrality" class="slide section level1">
+<h1>Betweeness Centrality</h1>
+<p>Betweeness centrality is based on the distances between vertices. It is (roughly) the number of geodesic paths that pass through any given node. Vertices with a high betweenness score will often act as bridging nodes between one or more communities.</p>
+<table class="layout">
+<tr>
+<td width="50%">
+<pre class="sourceCode r"><code class="sourceCode r">g &lt;-<span class="st"> </span><span class="kw">make_full_graph</span>(<span class="dv">4</span>) +<span class="st"> </span><span class="kw">vertex</span>(<span class="dv">1</span>) +<span class="st"> </span><span class="kw">make_full_graph</span>(<span class="dv">4</span>)
+g &lt;-<span class="st"> </span>g +<span class="st"> </span><span class="kw">edges</span>(<span class="kw">c</span>(<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">5</span>,<span class="dv">6</span>))
+<span class="kw">V</span>(g)$name &lt;-<span class="st"> </span>LETTERS[<span class="dv">1</span>:<span class="dv">9</span>]
+<span class="kw">betweenness</span>(g)</code></pre>
+<pre><code>##  A  B  C  D  E  F  G  H  I 
+##  0  0  0 15 16 15  0  0  0</code></pre>
+<p>Warning: Betweeness can be expensive to calculate. Try <code>estimate_betweeness</code> if <code>betweeness</code> is slow.</p>
+</td>
+<td>
+<img src="figure/unnamed-chunk-67-1.png" alt="plot of chunk unnamed-chunk-67" />
+</td>
+</tr>
+</table>
+</div>
+<div id="eigenvector-centrality" class="slide section level1">
+<h1>Eigenvector Centrality</h1>
+<p>The Eigenvector corresponding to the largest Eigenvalue of the adjacency matrix gives a high score to vertices that either have a lot of connections, or are connected to someone with a lot of connections.</p>
+<pre class="sourceCode r"><code class="sourceCode r">ec &lt;-<span class="st"> </span><span class="kw">eigen_centrality</span>(g)
+ec$vector</code></pre>
+<pre><code>##         A         B         C         D         E         F         G 
+## 0.8493220 0.8493220 0.8493220 1.0000000 0.6294435 1.0000000 0.8493220 
+##         H         I 
+## 0.8493220 0.8493220</code></pre>
+<p>Warning: Eigenvector centrality may be used in directed networks but, in principle, there are left and right eigenvectors to choose from. Some caution is required here.</p>
+</div>
+<div id="pagerank-centrality" class="slide section level1">
+<h1>PageRank Centrality</h1>
+<p>PageRank is the centrality measure used by Google to rank web pages. In fact ``Page'' refers to Larry Page, not a web page.</p>
+<p>It has a damping (<code>damping</code> in <code>igraph</code>) term, this imagines that you will click a few links but will eventually give up. Then there is another parameter (<code>personalized</code> in <code>igraph</code>) that represents the chance that at any moment the search is abandoned and reset to a random vertex.</p>
+<p>In <code>igraph</code> PageRank is provided through <code>page_rank</code>.</p>
+<pre class="sourceCode r"><code class="sourceCode r">pr &lt;-<span class="st"> </span><span class="kw">page_rank</span>(g)
+pr$vector</code></pre>
+<pre><code>##          A          B          C          D          E          F 
+## 0.10721963 0.10721963 0.10721963 0.14021259 0.07625702 0.14021259 
+##          G          H          I 
+## 0.10721963 0.10721963 0.10721963</code></pre>
+</div>
+<div id="community-detection" class="slide section level1">
+<h1>Community Detection</h1>
+<p>There isn't enough time in this workshop to cover community detection fully. <code>igraph</code> has a number functions, try typing <code>?cluster_fast_greedy</code> or <code>?communities</code> into the console.</p>
+<!-- # Community Detection {.sepblank} 
+
+Abandon I think -- teaser...
+-->
+<!-- ################################################################
+     ##              Community Detection                           ##
+     ################################################################ -->
+</div>
+<div id="statistical-inference" class="slide section level1 sepblank">
+<h1>Statistical Inference</h1>
+<!-- ################################################################
+     ##              Statistical Inference                         ##
+     ################################################################ -->
+</div>
+<div id="background-1" class="slide section level1">
+<h1>Background</h1>
+<p>So far we have been describing the structural properties of a single network. In many cases the network data we have is only a sample of a larger system. Or perhaps a snapshot at one moment in time. To make meaningful statements in these cases we need the tools of statistical inference.</p>
+<p>This section will involve making statistical models of networks based on the <em>random graph</em> family of network models.</p>
+</div>
+<div id="statnet" class="slide section level1">
+<h1>Statnet</h1>
+<p><code>statnet</code> is a suite of network tools from a group of academics mostly at the University of Washington (statnet.org). Each tool is a separate R package that is installed all in one go with <code>statnet</code>.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">install.packages</span>(<span class="st">&quot;statnet&quot;</span>)</code></pre>
+<p>This includes the <code>network</code> package (core features), <code>sna</code> (social network analysis) and <code>ergm</code> (exponential random graphs).</p>
+</div>
+<div id="import-to-statnet" class="slide section level1">
+<h1>Import to Statnet</h1>
+<p>The <code>statnet</code> suite is a complete set of network tools. However, it can be a little tricky to use compared to <code>igraph</code>. Here we will look at how to quickly get our data into <code>network</code> objects from files and converting from <code>igraph</code>.</p>
+<table class="layout">
+<tr>
+<td>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(network)
+
+el &lt;-<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&quot;data/dolphin_edges.csv&quot;</span>)
+
+<span class="co"># Read the edge list</span>
+dolphinNet &lt;-<span class="kw">network</span>(el, <span class="dt">matrix.type=</span><span class="st">&#39;edgelist&#39;</span>,
+                     <span class="dt">ignore.eval=</span><span class="ot">FALSE</span>, <span class="dt">directed=</span><span class="ot">FALSE</span>)
+
+<span class="co"># Attach the vertex attributes</span>
+va &lt;-<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&quot;data/dolphin_vertices.csv&quot;</span>,
+               <span class="dt">stringsAsFactors =</span> <span class="ot">FALSE</span>)
+
+ <span class="co"># it doesn&#39;t seem to like factors</span>
+dolphinNet%v%<span class="st">&quot;Gender&quot;</span> &lt;-<span class="st"> </span>va$Gender
+
+<span class="co"># It also has a default plot method</span>
+## plot(dolphinNet)</code></pre>
+</td>
+<td>
+<img src="figure/unnamed-chunk-72-1.png" alt="plot of chunk unnamed-chunk-72" />
+</td>
+</tr>
+</table>
+</div>
+<div id="convert-from-igraph" class="slide section level1">
+<h1>Convert from <code>igraph</code></h1>
+<p>The <code>intergraph</code> package is a useful shortcut to convert the objects from one package to the other.</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(intergraph)
+
+<span class="co"># statnet -&gt; igraph</span>
+dolphinIgraph &lt;-<span class="st"> </span><span class="kw">asIgraph</span>(dolphinNet, <span class="dt">vnames=</span><span class="st">&quot;vertex.names&quot;</span>)
+
+ <span class="co"># igraph -&gt; statnet</span>
+<span class="kw">data</span>(<span class="st">&quot;karate&quot;</span>)
+karateNet &lt;-<span class="st"> </span><span class="kw">asNetwork</span>(karate)</code></pre>
+</div>
+<div id="random-graphs" class="slide section level1">
+<h1>Random Graphs</h1>
+<p>A random graph is the simplest of the graph models. Every edge exists with probability, <span class="math">\(p\)</span>, and we only fix the average number of edges (the density). We can generate random graphs with:</p>
+<table class="layout">
+<tr>
+<td>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">10</span>)
+g &lt;-<span class="st"> </span><span class="kw">sample_gnp</span>(<span class="dv">10</span>, <span class="dt">p=</span><span class="fl">0.2</span>)</code></pre>
+</td>
+<td>
+<img src="figure/unnamed-chunk-75-1.png" alt="plot of chunk unnamed-chunk-75" />
+</td>
+</tr>
+</table>
+</div>
+<div id="exponential-random-graph-models-ergms" class="slide section level1">
+<h1>Exponential Random Graph Models (ERGMs)</h1>
+<p>An exponential random graph extends the simple random graph by increasing the probability of other properties and network motifs, not just the density. We can fit parameters to each motif in a similar way to terms in a GLM. First the simple case:</p>
+<p>On the left hand side of the formula is the network, on the right are the terms we wish to include. The <code>edges</code> term fits a parameter related to <span class="math">\(p\)</span> from the previous slide.</p>
+<table class="layout">
+<tr>
+<td>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(ergm)
+fit &lt;-<span class="st"> </span><span class="kw">ergm</span>(dolphinNet ~<span class="st"> </span>edges)</code></pre>
+<pre><code>## Evaluating log-likelihood at the estimate.</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">fit</code></pre>
+<pre><code>## 
+## MLE Coefficients:
+##  edges  
+## -2.388</code></pre>
+</td>
+<td>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Check it worked</span>
+pFit &lt;-<span class="st"> </span><span class="kw">exp</span>(fit$coef)/(<span class="dv">1</span>+<span class="kw">exp</span>(fit$coef))
+p &lt;-<span class="st"> </span><span class="kw">network.density</span>(dolphinNet)
+
+p</code></pre>
+<pre><code>## [1] 0.0840825</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">pFit</code></pre>
+<pre><code>##     edges 
+## 0.0840825</code></pre>
+</td>
+</tr>
+</table>
+</div>
+<div id="group-membership" class="slide section level1">
+<h1>Group Membership</h1>
+<p>The first question we might wish to ask is are connections affected by group membership? In the case of the dolphin network we know the gender of most of the dolphins.</p>
+<pre class="sourceCode r"><code class="sourceCode r">fitGender &lt;-<span class="st"> </span><span class="kw">ergm</span>(dolphinNet ~<span class="st"> </span>edges +<span class="st"> </span><span class="kw">nodematch</span>(<span class="st">&quot;Gender&quot;</span>))</code></pre>
+<pre><code>## Evaluating log-likelihood at the estimate.</code></pre>
+<p>Are dolphins of the same gender more likely to be connected?</p>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(fitGender)</code></pre>
+</div>
+<div id="group-membership-1" class="slide section level1">
+<h1>Group Membership</h1>
+<p><small></p>
+<pre><code>## 
+## ==========================
+## Summary of model fit
+## ==========================
+## 
+## Formula:   dolphinNet ~ edges + nodematch(&quot;Gender&quot;)
+## &lt;environment: 0x00000000195f0498&gt;
+## 
+## Iterations:  6 out of 20 
+## 
+## Monte Carlo MLE Results:
+##                  Estimate Std. Error MCMC % p-value    
+## edges             -2.9024     0.1385      0  &lt;1e-04 ***
+## nodematch.Gender   0.9538     0.1737      0  &lt;1e-04 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##      Null Deviance: 2621  on 1891  degrees of freedom
+##  Residual Deviance: 1060  on 1889  degrees of freedom
+##  
+## AIC: 1064    BIC: 1075    (Smaller is better.)</code></pre>
+<p></small> Yes!</p>
+</div>
+<div id="other-model-terms" class="slide section level1">
+<h1>Other Model Terms</h1>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>edges</code></td>
+<td align="left">Fits the total number of edges</td>
+</tr>
+<tr class="even">
+<td align="left"><code>nodematch</code></td>
+<td align="left">Fits the propensity for inter-group edges</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>nodecov</code></td>
+<td align="left">Nodal covariates, numeric variables that might influence connection</td>
+</tr>
+<tr class="even">
+<td align="left"><code>triangles</code></td>
+<td align="left">Total number of triangles, fits more clustered networks. Can have trouble fitting.</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>gwesp</code></td>
+<td align="left">Can be more stable than <code>triangles</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>degree</code></td>
+<td align="left">Degree distribution</td>
+</tr>
+</tbody>
+</table>
+<p>See <code>?&quot;ergm-terms&quot;</code> for a full list of terms.</p>
+<p>Other ergm functionality:</p>
+<ul>
+<li>Constraints may also be added to the model <code>?&quot;ergm-constraints&quot;</code>.</li>
+<li>Simulate from a model fit with the <code>simulate</code> function.</li>
+<li>Check goodness of fit with the <code>gof</code> function.</li>
+</ul>
+</div>
+<div id="simulation-example" class="slide section level1">
+<h1>Simulation example</h1>
+<pre class="sourceCode r"><code class="sourceCode r">dolphinSim &lt;-<span class="st"> </span><span class="kw">simulate</span>(fitGender)
+
+op &lt;-<span class="st"> </span><span class="kw">par</span>(<span class="dt">mfrow=</span><span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">2</span>), <span class="dt">mar=</span><span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">0</span>))
+<span class="kw">plot</span>(dolphinNet, <span class="dt">vertex.col=</span><span class="kw">c</span>(<span class="st">&quot;pink&quot;</span>,<span class="st">&quot;blue&quot;</span>, <span class="st">&quot;white&quot;</span>)[<span class="kw">factor</span>(dolphinNet%v%<span class="st">&quot;Gender&quot;</span>)],
+     <span class="dt">main=</span><span class="st">&quot;Real Network&quot;</span>)
+<span class="kw">plot</span>(dolphinSim, <span class="dt">vertex.col=</span><span class="kw">c</span>(<span class="st">&quot;pink&quot;</span>,<span class="st">&quot;blue&quot;</span>, <span class="st">&quot;white&quot;</span>)[<span class="kw">factor</span>(dolphinNet%v%<span class="st">&quot;Gender&quot;</span>)],
+     <span class="dt">main=</span><span class="st">&quot;Simulated Network&quot;</span>)
+<span class="kw">par</span>(op)</code></pre>
+<table class="layout">
+<tr>
+<td width="50%">
+<img src="figure/unnamed-chunk-82-1.png" alt="plot of chunk unnamed-chunk-82" />
+</td>
+<td>
+The simulated network misses the community structure but does recreate density and inter-gender connectivity.
+</td>
+</tr>
+</table>
+</div>
+<div id="goodness-of-fit" class="slide section level1">
+<h1>Goodness of Fit</h1>
+<p>The goodness of fit function, <code>gof</code> will simulated many networks and calculate summary statistics to see how close the model networks are to your original model. This is very useful to assess the quality of your model. Here we fit degree well (left) but clustering and geodesic distance poorly.</p>
+<pre class="sourceCode r"><code class="sourceCode r">gofGender &lt;-<span class="st"> </span><span class="kw">gof</span>(fitGender)
+<span class="kw">plot</span>(gofGender)</code></pre>
+<div class="figure">
+<img src="figure/unnamed-chunk-83-1.png" />
+</div>
+</div>
+<div id="what-next" class="slide section level1">
+<h1>What Next?</h1>
+<ul>
+<li>Stay around for the evening event!</li>
+<li>Full two day network analysis course - <a href="http://www.mango-solutions.com/wp/products-services/r-services/r-training/">www.mango-solutions.com</a>. Email <a href="mailto:training@mango-solutions.com">training@mango-solutions.com</a></li>
+<li>Other courses: Introduction to R, Shiny apps, Package development, Visualisation, Python and more.</li>
+<li>EARL (13th-15th September 2016)</li>
+</ul>
+</div>
+<div id="follow-mango" class="slide section level1">
+<h1>Follow Mango</h1>
+<center>
+<table class="layout" style="width: 50%;">
+<tr>
+<td>
+<img src="images/twitter.jpg">
+</td>
+<td>
+<p><a href="https://twitter.com/mangothecat"><span class="citation">@mangothecat</span></a></p>
+<p><a href="https://twitter.com/earlconf"><span class="citation">@earlconf</span></a></p>
+</td>
+</tr>
+<tr>
+<td>
+<img src="images/github.jpg">
+</td>
+<td>
+<a href="https://github.com/mangothecat">mangothecat</a>
+</td>
+</tr>
+</table>
+</center>
+<p>Contact me: <a href="mailto:dashton@mango-solutions.com">dashton@mango-solutions.com</a></p>
+</div>
+</body>
+</html>
